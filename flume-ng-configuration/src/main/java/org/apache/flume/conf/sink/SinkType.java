@@ -92,7 +92,14 @@ public enum SinkType {
    *
    * @see org.apache.flume.sink.hbase.AsyncHBaseSink
    */
-  ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink");
+  ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink"),
+
+  /**
+   * JDBC sink
+   *
+   * @see org.apache.flume.sink.jdbc.PreparedStatementJDBCSink
+   */
+  JDBC("org.apache.flume.sink.jdbc.PreparedStatementJDBCSink");
 
   private final String sinkClassName;
 
