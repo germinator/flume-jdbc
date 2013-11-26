@@ -48,11 +48,12 @@ public class DateHeaderParameter extends HeaderParameter {
 			throw new IllegalArgumentException("Config string is required for date parameters.");
 		}
 		final Matcher m = CONFIG_PATTERN.matcher(config);
-		if (!m.matches()) {
-			throw new IllegalArgumentException("Config string is not formatted correctly.  Needs to me: <SimpleDateFormat>#<TimeZone>");
+		if (m.matches()) {
+			format = new SimpleDateFormat(m.group(1));
+			format.setTimeZone(TimeZone.getTimeZone(m.group(2)));
+		} else {
+			format = new SimpleDateFormat(config);
 		}
-		format = new SimpleDateFormat(m.group(1));
-		format.setTimeZone(TimeZone.getTimeZone(m.group(2)));
 	}
 
 	@Override

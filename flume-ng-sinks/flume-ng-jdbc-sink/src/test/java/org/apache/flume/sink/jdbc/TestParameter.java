@@ -137,9 +137,9 @@ public class TestParameter {
 		p.setValue(statement, event);
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testDateHeaderNoTimeZone() throws Exception {
-		Parameter.newParameter(1, "header.foo", "date", "yyyy-MM-ddTHH:mm:ss");
+		Parameter.newParameter(1, "header.foo", "date", "yyyy-MM-dd HH:mm:ss");
 	}
 
 	@Test
