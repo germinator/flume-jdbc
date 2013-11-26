@@ -24,6 +24,7 @@ import static org.hamcrest.CoreMatchers.*;
 
 import java.io.UnsupportedEncodingException;
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ import org.apache.flume.Event;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class TestParameter {
 	
@@ -59,7 +61,7 @@ public class TestParameter {
 
 	@Test
 	public void testStringBodyParameterValidString() throws Exception {
-		Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
+		final Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
 		assertThat(p, notNullValue());
 		when(event.getBody()).thenReturn("mystring".getBytes());
 		p.setValue(statement, event);
@@ -68,7 +70,7 @@ public class TestParameter {
 
 	@Test
 	public void testStringBodyParameterEmpty() throws Exception {
-		Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
+		final Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
 		assertThat(p, notNullValue());
 		when(event.getBody()).thenReturn(new byte[] { });
 		p.setValue(statement, event);
@@ -78,7 +80,7 @@ public class TestParameter {
 	@Ignore // The String constructor doesn't seem to throw this on invalid UTF-8 strings.  Maybe this is a feature?
 	@Test(expected=UnsupportedEncodingException.class)
 	public void testStringBodyParameterInvalidString() throws Exception {
-		Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
+		final Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
 		assertThat(p, notNullValue());
 		// Invalid UTF-8 sequence from: http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt
 		when(event.getBody()).thenReturn(new byte[] { (byte) 0xfe, (byte) 0xfe, (byte) 0xff, (byte) 0xff });
@@ -87,7 +89,7 @@ public class TestParameter {
 
 	@Test
 	public void testStringHeaderParameterNotNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "string", null);
+		final Parameter p = Parameter.newParameter(1, "header.foo", "string", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("mystring");
 		p.setValue(statement, event);
@@ -96,7 +98,7 @@ public class TestParameter {
 
 	@Test
 	public void testStringHeaderParameterNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "string", null);
+		final Parameter p = Parameter.newParameter(1, "header.foo", "string", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn(null);
 		p.setValue(statement, event);
@@ -105,7 +107,7 @@ public class TestParameter {
 
 	@Test
 	public void testLongHeaderParameterNotNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
+		final Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("1234");
 		p.setValue(statement, event);
@@ -114,13 +116,13 @@ public class TestParameter {
 
 	@Test
 	public void testIntHeaderParameter() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "int", null);
+		final Parameter p = Parameter.newParameter(1, "header.foo", "int", null);
 		assertThat(p, notNullValue());
 	}
 
 	@Test
 	public void testLongHeaderParameterNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
+		final Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn(null);
 		p.setValue(statement, event);
@@ -129,10 +131,26 @@ public class TestParameter {
 
 	@Test(expected=NumberFormatException.class)
 	public void testLongHeaderParameterInvalid() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
+		final Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("notalong");
 		p.setValue(statement, event);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testDateHeaderNoTimeZone() throws Exception {
+		Parameter.newParameter(1, "header.foo", "date", "yyyy-MM-ddTHH:mm:ss");
+	}
+
+	@Test
+	public void testDateHeaderParameter() throws Exception {
+		final Parameter p = Parameter.newParameter(1, "header.foo", "date", "yyyy-MM-dd HH:mm:ss#GMT");
+		assertThat(p, notNullValue());
+		when(headers.get("foo")).thenReturn("2013-11-26 06:43:50");
+		p.setValue(statement, event);
+		final ArgumentCaptor<Timestamp> captor = ArgumentCaptor.forClass(Timestamp.class);
+		verify(statement).setTimestamp(eq(1), captor.capture());
+		assertEquals(1385448230000L, captor.getValue().getTime());
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -147,7 +165,7 @@ public class TestParameter {
 	
 	@Test
 	public void testCustomParameterCreation() throws Exception {
-		Parameter p = Parameter.newParameter(1, "custom", "org.apache.flume.sink.jdbc.TestParameter$TestCustomParameter", "UTF-8");
+		final Parameter p = Parameter.newParameter(1, "custom", "org.apache.flume.sink.jdbc.TestParameter$TestCustomParameter", "UTF-8");
 		assertThat(p, notNullValue());
 		assertTrue(p instanceof TestCustomParameter);
 	}
