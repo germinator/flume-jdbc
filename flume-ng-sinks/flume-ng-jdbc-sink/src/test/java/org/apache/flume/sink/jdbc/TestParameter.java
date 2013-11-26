@@ -128,4 +128,17 @@ public class TestParameter {
 		when(headers.get("foo")).thenReturn("notalong");
 		p.setValue(statement, event);
 	}
+	
+	@Test
+	public void testCustomParameterCreation() throws Exception {
+		Parameter p = Parameter.newParameter(1, "custom", "org.apache.flume.sink.jdbc.TestParameter$TestCustomParameter", "UTF-8");
+		assertThat(p, notNullValue());
+		assertTrue(p instanceof TestCustomParameter);
+	}
+	
+	public static class TestCustomParameter extends CustomParameter {
+		public TestCustomParameter(final int id) { super(id); }
+		@Override public void setValue(PreparedStatement ps, Event e) throws Exception { }
+	}
+
 }

@@ -32,6 +32,7 @@ public abstract class Parameter {
 	
 	private static final String BODY_ITEM = "body";
 	private static final String HEADER_ITEM_PREFIX = "header.";
+	private static final String CUSTOM_ITEM = "custom";
 	private static final String STRING_TYPE = "string";
 	private static final String LONG_TYPE = "long";
 	protected final int id;
@@ -39,8 +40,8 @@ public abstract class Parameter {
 	/**
 	 * A factory for known event types.
 	 * @param id the JDBC parameter id, [1..n]
-	 * @param item the event value, one of: "body", or "header.xxx"
-	 * @param type the type of value stored in the event, one of: "utf8string", "string", "long"
+	 * @param item the event value, one of: "body", "header.xxx", or "custom"
+	 * @param type the type of value stored in the event, one of: "utf8string", "string", "long", or a class name.
 	 * @param config the config string for the parameter
 	 * @return a parameter
 	 * @throws IllegalArgumentException if the value and type are an invalid combo or unknown
@@ -48,15 +49,24 @@ public abstract class Parameter {
 	public static final Parameter newParameter(final int id, final String item, final String type, final String config) {
 		Parameter p = null;
 		if (BODY_ITEM.equals(item)) {
+			// A "body" tag.
 			if (STRING_TYPE.equals(type)) {
 				p = new StringBodyParameter(id);
 			}
 		} else if ((item != null) && item.startsWith(HEADER_ITEM_PREFIX)) {
+			// A "header" tag.
 			final String header = item.substring(HEADER_ITEM_PREFIX.length());
 			if (STRING_TYPE.equals(type)) {
 				p = new StringHeaderParameter(id, header);
 			} else if (LONG_TYPE.equals(type)) {
 				p = new LongHeaderParameter(id, header);
+			}
+		} else if (CUSTOM_ITEM.equals(item)){
+			// A custom class tag.  Create the instance with no-arg constructor.
+			try {
+				p = (CustomParameter) Class.forName(type).getConstructor(Integer.TYPE).newInstance(new Object[] { id });
+			} catch (Exception e) {
+				throw new IllegalArgumentException("Could not initialize custom parameter type: " + type + " with config: " + config + ".");
 			}
 		}
 		
