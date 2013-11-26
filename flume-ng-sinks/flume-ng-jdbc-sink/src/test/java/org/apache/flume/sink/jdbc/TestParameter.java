@@ -48,8 +48,18 @@ public class TestParameter {
 	}
 
 	@Test
-	public void testUTF8StringBodyParameterValidString() throws Exception {
-		Parameter p = Parameter.newParameter(1, "body", "utf8string");
+	public void testStringBodyParameterNoParameter() throws Exception {
+		Parameter.newParameter(1, "body", "string", null);
+	}
+
+	@Test
+	public void testStringBodyParameterBlankParameter() throws Exception {
+		Parameter.newParameter(1, "body", "string", "");
+	}
+
+	@Test
+	public void testStringBodyParameterValidString() throws Exception {
+		Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
 		assertThat(p, notNullValue());
 		when(event.getBody()).thenReturn("mystring".getBytes());
 		p.setValue(statement, event);
@@ -57,8 +67,8 @@ public class TestParameter {
 	}
 
 	@Test
-	public void testUTF8StringBodyParameterEmpty() throws Exception {
-		Parameter p = Parameter.newParameter(1, "body", "utf8string");
+	public void testStringBodyParameterEmpty() throws Exception {
+		Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
 		assertThat(p, notNullValue());
 		when(event.getBody()).thenReturn(new byte[] { });
 		p.setValue(statement, event);
@@ -67,8 +77,8 @@ public class TestParameter {
 
 	@Ignore // The String constructor doesn't seem to throw this on invalid UTF-8 strings.  Maybe this is a feature?
 	@Test(expected=UnsupportedEncodingException.class)
-	public void testUTF8StringBodyParameterInvalidString() throws Exception {
-		Parameter p = Parameter.newParameter(1, "body", "utf8string");
+	public void testStringBodyParameterInvalidString() throws Exception {
+		Parameter p = Parameter.newParameter(1, "body", "string", "UTF-8");
 		assertThat(p, notNullValue());
 		// Invalid UTF-8 sequence from: http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt
 		when(event.getBody()).thenReturn(new byte[] { (byte) 0xfe, (byte) 0xfe, (byte) 0xff, (byte) 0xff });
@@ -77,7 +87,7 @@ public class TestParameter {
 
 	@Test
 	public void testStringHeaderParameterNotNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "string");
+		Parameter p = Parameter.newParameter(1, "header.foo", "string", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("mystring");
 		p.setValue(statement, event);
@@ -86,7 +96,7 @@ public class TestParameter {
 
 	@Test
 	public void testStringHeaderParameterNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "string");
+		Parameter p = Parameter.newParameter(1, "header.foo", "string", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn(null);
 		p.setValue(statement, event);
@@ -95,7 +105,7 @@ public class TestParameter {
 
 	@Test
 	public void testLongHeaderParameterNotNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "long");
+		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("1234");
 		p.setValue(statement, event);
@@ -104,7 +114,7 @@ public class TestParameter {
 
 	@Test
 	public void testLongHeaderParameterNull() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "long");
+		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn(null);
 		p.setValue(statement, event);
@@ -113,7 +123,7 @@ public class TestParameter {
 
 	@Test(expected=NumberFormatException.class)
 	public void testLongHeaderParameterInvalid() throws Exception {
-		Parameter p = Parameter.newParameter(1, "header.foo", "long");
+		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("notalong");
 		p.setValue(statement, event);

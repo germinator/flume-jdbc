@@ -27,7 +27,7 @@ public class TestPreparedStatementParser {
 	
 	@Test
 	public void testCommonStatementParsing() {
-		final PreparedStatementParser p = new PreparedStatementParser("insert into mytable (mystringbody, mystringheader, mylongheader) values (${body:utf8string}, ${header.foo:string}, ${header.bar:long})");
+		final PreparedStatementParser p = new PreparedStatementParser("insert into mytable (mystringbody, mystringheader, mylongheader) values (${body:string(UTF-8)}, ${header.foo:string}, ${header.bar:long()})");
 		assertThat(p.getPreparedSQL(), is("insert into mytable (mystringbody, mystringheader, mylongheader) values (?, ?, ?)"));
 		assertThat(p.getParameters().size(), is(3));
 	}

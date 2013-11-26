@@ -23,20 +23,31 @@ import java.sql.PreparedStatement;
 import org.apache.flume.Event;
 
 /**
- * A parameter that converts the body of the event (a byte array) to a String,
- * assuming a UTF-8 encoding."
+ * A parameter that converts the body of the event (a byte array) to a String.
  */
-public class UTF8StringBodyParameter extends BodyParameter {
+public class StringBodyParameter extends BodyParameter {
+	
+	private static final String DEFAULT_CHARSET = "UTF-8";
+	private String charset;
 
-	public UTF8StringBodyParameter(final int id) {
+	public StringBodyParameter(final int id) {
 		super(id);
+	}
+	
+	@Override
+	public void configure(final String config) {
+		if ((config != null) && !"".equals(config)) {
+			charset = config;
+		} else {
+			charset = DEFAULT_CHARSET;
+		}
 	}
 
 	@Override
 	public void setValue(final PreparedStatement ps, final Event e) throws Exception {
 		final byte[] body = e.getBody();
 		// Null bodies are not valid.  They are always at least arrays of zero length.
-		ps.setString(id, new String(body, "UTF-8"));
+		ps.setString(id, new String(body, charset));
 	}
 
 }

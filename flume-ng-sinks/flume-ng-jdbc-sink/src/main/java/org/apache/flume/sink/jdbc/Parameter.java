@@ -33,7 +33,6 @@ public abstract class Parameter {
 	private static final String BODY_ITEM = "body";
 	private static final String HEADER_ITEM_PREFIX = "header.";
 	private static final String STRING_TYPE = "string";
-	private static final String UTF8_STRING_TYPE = "utf8" + STRING_TYPE;
 	private static final String LONG_TYPE = "long";
 	protected final int id;
 
@@ -42,23 +41,31 @@ public abstract class Parameter {
 	 * @param id the JDBC parameter id, [1..n]
 	 * @param item the event value, one of: "body", or "header.xxx"
 	 * @param type the type of value stored in the event, one of: "utf8string", "string", "long"
+	 * @param config the config string for the parameter
 	 * @return a parameter
 	 * @throws IllegalArgumentException if the value and type are an invalid combo or unknown
 	 */
-	public static final Parameter newParameter(final int id, final String item, final String type) {
+	public static final Parameter newParameter(final int id, final String item, final String type, final String config) {
+		Parameter p = null;
 		if (BODY_ITEM.equals(item)) {
-			if (UTF8_STRING_TYPE.equals(type)) {
-				return new UTF8StringBodyParameter(id);
+			if (STRING_TYPE.equals(type)) {
+				p = new StringBodyParameter(id);
 			}
 		} else if ((item != null) && item.startsWith(HEADER_ITEM_PREFIX)) {
 			final String header = item.substring(HEADER_ITEM_PREFIX.length());
 			if (STRING_TYPE.equals(type)) {
-				return new StringHeaderParameter(id, header);
+				p = new StringHeaderParameter(id, header);
 			} else if (LONG_TYPE.equals(type)) {
-				return new LongHeaderParameter(id, header);
+				p = new LongHeaderParameter(id, header);
 			}
 		}
-		throw new IllegalArgumentException("Invalid SQL parameter item: " + item + " and type: " + type + ".");
+		
+		if (p != null) {
+			p.configure(config);
+			return p;
+		}
+		
+		throw new IllegalArgumentException("Invalid SQL parameter item: " + item + " and type: " + type + " with config: " + config + ".");
 	}
 	
 	protected Parameter(final int id) {
@@ -72,5 +79,13 @@ public abstract class Parameter {
 	 * @throws Exception on any sort of conversion error
 	 */
 	public abstract void setValue(final PreparedStatement ps, final Event e) throws Exception;
+	
+	/**
+	 * Configures the parameter.  Default implementation does nothing.
+	 * @param config the config string, or null if no config string provided
+	 */
+	public void configure(final String config) {
+		// Does nothing.
+	}
 	
 }

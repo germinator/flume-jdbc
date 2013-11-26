@@ -35,7 +35,8 @@ import com.google.common.collect.Lists;
 public class PreparedStatementParser {
 
 	private static final Logger LOG = LoggerFactory.getLogger(PreparedStatementParser.class);
-	private static final Pattern TOKEN_PATTERN = Pattern.compile("\\$\\{(.*?):(.*?)\\}");
+	private static final Pattern TOKEN_PATTERN = Pattern.compile("\\$\\{(.+?):(.+?)\\}");
+	private static final Pattern TYPE_CONFIG_PATTERN = Pattern.compile("(.+)\\((.*?)\\)");
 	private String preparedSql;
 	private List<Parameter> parameters = Lists.newArrayList();
 	
@@ -59,16 +60,34 @@ public class PreparedStatementParser {
 		int id = 1;
 		while (matcher.find()) {
 			final String item = matcher.group(1);
-			final String type = matcher.group(2);
-			parameters.add(Parameter.newParameter(id, item, type));
+			final String typeConfig = matcher.group(2);
+			final TypeConfig tc = parseTypeConfig(typeConfig);
+			parameters.add(Parameter.newParameter(id, item, tc.type, tc.config));
 			sql = matcher.replaceFirst("?");
 			matcher = TOKEN_PATTERN.matcher(sql);
 			id++;
-			LOG.debug("Replaced token with item: '{}' and type: '{}'", item, type);
+			LOG.debug("Replaced token with item: '{}' and type: '{}' with config: '{}'", new Object[] { item, tc.type, tc.config });
 		}
 		
 		preparedSql = sql;
 		LOG.debug("Resulting parameterized SQL statement: '{}'.", preparedSql);
+	}
+	
+	private static TypeConfig parseTypeConfig(String typeConfig) {
+		final Matcher m = TYPE_CONFIG_PATTERN.matcher(typeConfig);
+		if (!m.matches()) {
+			return new TypeConfig(typeConfig, null);
+		}
+		return new TypeConfig(m.group(1), m.group(2));
+	}
+	
+	private static class TypeConfig {
+		public final String type;
+		public final String config;
+		public TypeConfig(final String t, final String c) {
+			type = t;
+			config = c;
+		}
 	}
 
 }

@@ -61,7 +61,7 @@ public class TestPreparedStatementJDBCSink {
 				put("user", USER).
 				put("password", PASSWORD).
 				put("batchSize", "10").
-				put("sql", "insert into test (body, ext_id) values (${body:utf8string}, ${header.id:long})").build()));
+				put("sql", "insert into test (body, ext_id) values (${body:string}, ${header.id:long})").build()));
 		sink.setChannel(channel);
 		sink.start();
 	}
