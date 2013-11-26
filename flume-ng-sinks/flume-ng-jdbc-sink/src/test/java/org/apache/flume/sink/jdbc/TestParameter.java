@@ -113,6 +113,12 @@ public class TestParameter {
 	}
 
 	@Test
+	public void testIntHeaderParameter() throws Exception {
+		Parameter p = Parameter.newParameter(1, "header.foo", "int", null);
+		assertThat(p, notNullValue());
+	}
+
+	@Test
 	public void testLongHeaderParameterNull() throws Exception {
 		Parameter p = Parameter.newParameter(1, "header.foo", "long", null);
 		assertThat(p, notNullValue());
@@ -127,6 +133,16 @@ public class TestParameter {
 		assertThat(p, notNullValue());
 		when(headers.get("foo")).thenReturn("notalong");
 		p.setValue(statement, event);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testInvalidItem() throws Exception {
+		Parameter.newParameter(1, "foo", "long", null);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testInvalidType() throws Exception {
+		Parameter.newParameter(1, "body", "foo", null);
 	}
 	
 	@Test

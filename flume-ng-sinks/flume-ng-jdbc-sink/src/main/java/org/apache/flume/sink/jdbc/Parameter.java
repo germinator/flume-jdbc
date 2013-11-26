@@ -35,6 +35,7 @@ public abstract class Parameter {
 	private static final String CUSTOM_ITEM = "custom";
 	private static final String STRING_TYPE = "string";
 	private static final String LONG_TYPE = "long";
+	private static final String INT_TYPE = "int";
 	protected final int id;
 
 	/**
@@ -60,6 +61,8 @@ public abstract class Parameter {
 				p = new StringHeaderParameter(id, header);
 			} else if (LONG_TYPE.equals(type)) {
 				p = new LongHeaderParameter(id, header);
+			} else if (INT_TYPE.equals(type)) {
+				p = new IntHeaderParameter(id, header);
 			}
 		} else if (CUSTOM_ITEM.equals(item)){
 			// A custom class tag.  Create the instance with no-arg constructor.
