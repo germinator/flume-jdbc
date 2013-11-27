@@ -48,6 +48,16 @@ public class TestParameter {
 		headers = mock(Map.class);
 		when(event.getHeaders()).thenReturn(headers);
 	}
+	
+	@Test
+	public void testByteArrayBodyParameter() throws Exception {
+		final Parameter p = Parameter.newParameter(1, "body", "bytearray", null);
+		assertThat(p, notNullValue());
+		final byte[] bytes = new byte[] { 1, 2, 3 };
+		when(event.getBody()).thenReturn(bytes);
+		p.setValue(statement, event);
+		verify(statement).setBytes(1, bytes);
+	}
 
 	@Test
 	public void testStringBodyParameterNoParameter() throws Exception {

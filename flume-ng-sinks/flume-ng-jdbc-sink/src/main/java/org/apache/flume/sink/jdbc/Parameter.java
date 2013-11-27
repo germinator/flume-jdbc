@@ -33,6 +33,7 @@ public abstract class Parameter {
 	private static final String BODY_ITEM = "body";
 	private static final String HEADER_ITEM_PREFIX = "header.";
 	private static final String CUSTOM_ITEM = "custom";
+	private static final String BYTEARRAY_TYPE = "bytearray";
 	private static final String STRING_TYPE = "string";
 	private static final String LONG_TYPE = "long";
 	private static final String INT_TYPE = "int";
@@ -54,6 +55,8 @@ public abstract class Parameter {
 			// A "body" tag.
 			if (STRING_TYPE.equals(type)) {
 				p = new StringBodyParameter(id);
+			} else if (BYTEARRAY_TYPE.equals(type)) {
+				p = new ByteArrayBodyParameter(id);
 			}
 		} else if ((item != null) && item.startsWith(HEADER_ITEM_PREFIX)) {
 			// A "header" tag.
