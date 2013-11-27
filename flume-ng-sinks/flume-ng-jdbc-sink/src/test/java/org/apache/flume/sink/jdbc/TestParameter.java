@@ -58,14 +58,34 @@ public class TestParameter {
 		p.setValue(statement, event);
 		verify(statement).setBytes(1, bytes);
 	}
-
+	
+	@Test
+	public void testDoubleHeaderParameter() throws Exception {
+		final Parameter p = Parameter.newParameter(1, "header.foo", "double", null);
+		assertThat(p, notNullValue());
+		when(headers.get("foo")).thenReturn("123.4");
+		p.setValue(statement, event);
+		verify(statement).setDouble(1, 123.4);
+	}
+	
+	@Test
+	public void testFloatHeaderParameter() throws Exception {
+		final Parameter p = Parameter.newParameter(1, "header.foo", "float", null);
+		assertThat(p, notNullValue());
+		when(headers.get("foo")).thenReturn("1.2");
+		p.setValue(statement, event);
+		verify(statement).setFloat(1, 1.2f);
+	}
+	
 	@Test
 	public void testStringBodyParameterNoParameter() throws Exception {
+		// Just check to make sure this is a valid config.
 		Parameter.newParameter(1, "body", "string", null);
 	}
 
 	@Test
 	public void testStringBodyParameterBlankParameter() throws Exception {
+		// Just check to make sure this is a valid config.
 		Parameter.newParameter(1, "body", "string", "");
 	}
 
