@@ -139,7 +139,14 @@ public class SinkConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.sink.hbase.AsyncHBaseSink
      */
-    ASYNCHBASE("org.apache.flume.sink.hbase.HBaseSinkConfiguration");
+    ASYNCHBASE("org.apache.flume.sink.hbase.HBaseSinkConfiguration"),
+
+    /**
+     * JDBC Sink
+     *
+     * @see org.apache.flume.sink.jdbc.PreparedStatementJDBCSink
+     */
+    JDBC("org.apache.flume.sink.jdbc.PreparedStatementJDBCSinkConfiguration");
 
     private final String sinkConfigurationName;
 
