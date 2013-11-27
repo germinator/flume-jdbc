@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.jdbc;
 
+import java.nio.charset.Charset;
 import java.sql.PreparedStatement;
 
 import org.apache.flume.Event;
@@ -27,8 +28,7 @@ import org.apache.flume.Event;
  */
 public class StringBodyParameter extends BodyParameter {
 	
-	private static final String DEFAULT_CHARSET = "UTF-8";
-	private String charset;
+	private Charset charset;
 
 	public StringBodyParameter(final int id) {
 		super(id);
@@ -37,9 +37,9 @@ public class StringBodyParameter extends BodyParameter {
 	@Override
 	public void configure(final String config) {
 		if ((config != null) && !"".equals(config)) {
-			charset = config;
+			charset = Charset.forName(config);
 		} else {
-			charset = DEFAULT_CHARSET;
+			charset = Charset.defaultCharset();
 		}
 	}
 
