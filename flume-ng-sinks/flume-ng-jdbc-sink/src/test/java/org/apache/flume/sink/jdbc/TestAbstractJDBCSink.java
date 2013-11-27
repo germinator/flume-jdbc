@@ -126,7 +126,7 @@ public class TestAbstractJDBCSink {
 				return null;
 			}
 		});
-		assertSame(Status.BACKOFF, sink.process());
+		assertSame(Status.READY, sink.process());
 	}
 
 }

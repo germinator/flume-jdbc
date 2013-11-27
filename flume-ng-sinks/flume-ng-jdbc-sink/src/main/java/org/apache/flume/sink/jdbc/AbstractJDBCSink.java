@@ -196,7 +196,7 @@ public abstract class AbstractJDBCSink extends AbstractSink implements Configura
 		
 		if (count < batchSize) {
 			counter.incrementBatchUnderflowCount();
-			return Status.BACKOFF;
+			return Status.READY;
 		}
 		
 		// Else, count == batchSize and the batch is full.
