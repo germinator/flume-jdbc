@@ -22,9 +22,9 @@ package org.apache.flume.sink.jdbc;
  * A subclass of parameter used to identify custom parameters.
  */
 public abstract class CustomParameter extends Parameter {
-	
-	public CustomParameter(final int id) {
-		super(id);
-	}
+
+  public CustomParameter(final int id) {
+    super(id);
+  }
 
 }

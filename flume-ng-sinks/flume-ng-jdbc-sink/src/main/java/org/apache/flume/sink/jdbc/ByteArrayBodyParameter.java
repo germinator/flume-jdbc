@@ -26,15 +26,17 @@ import org.apache.flume.Event;
  * A parameter that puts the byte array header into a the database as.
  */
 public class ByteArrayBodyParameter extends BodyParameter {
-	
-	public ByteArrayBodyParameter(final int id) {
-		super(id);
-	}
-	
-	@Override
-	public void setValue(final PreparedStatement ps, final Event e) throws Exception {
-		// Null bodies are not valid.  They are always at least arrays of zero length.
-		ps.setBytes(id, e.getBody());
-	}
+
+  public ByteArrayBodyParameter(final int id) {
+    super(id);
+  }
+
+  @Override
+  public void setValue(final PreparedStatement ps, final Event e)
+      throws Exception {
+    // Null bodies are not valid. They are always at least arrays of zero
+    // length.
+    ps.setBytes(id, e.getBody());
+  }
 
 }

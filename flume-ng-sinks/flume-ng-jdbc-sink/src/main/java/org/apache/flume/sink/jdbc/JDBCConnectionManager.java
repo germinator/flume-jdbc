@@ -31,92 +31,96 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 
 /**
- * A wrapper to manage JDBC connections.  This is just a place to keep the connection
- * management code out of the abstract sink class.  Trying to keep things cleaner.
+ * A wrapper to manage JDBC connections. This is just a place to keep the
+ * connection management code out of the abstract sink class. Trying to keep
+ * things cleaner.
  */
 public class JDBCConnectionManager implements Configurable {
 
-	private static final Logger LOG = LoggerFactory.getLogger(JDBCConnectionManager.class);
-	private static final int CONNECTION_VALID_TIMEOUT = 500;
-	private String driver;
-	private String url;
-	private String user;
-	private String password;
-	private Connection connection;
-	private SinkCounter counter;
-	
-	public JDBCConnectionManager(final SinkCounter counter) {
-		this.counter = counter;
-	}
+  private static final Logger LOG = LoggerFactory
+      .getLogger(JDBCConnectionManager.class);
+  private static final int CONNECTION_VALID_TIMEOUT = 500;
+  private String driver;
+  private String url;
+  private String user;
+  private String password;
+  private Connection connection;
+  private SinkCounter counter;
 
-	@Override
-	public void configure(final Context context) {
-		driver = context.getString("driver");
-		Preconditions.checkNotNull(driver, "Driver must be specified.");
-		url = context.getString("url");
-		Preconditions.checkNotNull(url, "URL must be specified.");
-		user = context.getString("user");
-		Preconditions.checkNotNull(user, "User must be specified.");
-		password = context.getString("password");
-		Preconditions.checkNotNull(password, "Driver must be specified.");
-	}
-	
-	public Connection getConnection() {
-		return connection;
-	}
-	
-	/**
-	 * Start the connection manager: load the driver and create a connection.
-	 * Note that the sink counter must have been started before calling this method.
-	 */
-	public void start() {
-		try {
-			Class.forName(driver);
-			createConnection();
-		} catch (final Exception e) {
-			LOG.error("Unable to create JDBC connection to {}.", url, e);
-			counter.incrementConnectionFailedCount();
-			closeConnection();
-			throw new IllegalArgumentException(e);
-		}
-	}
-	
-	/**
-	 * Ensure that the current JDBC connection is valid.  If it's not, create one.
-	 * @throws SQLException
-	 * @throws ClassNotFoundException
-	 */
-	public void ensureConnectionValid() throws SQLException, ClassNotFoundException {
-		LOG.debug("Testing JDBC connection validity to: {}.", url);
-		if (connection == null || !connection.isValid(CONNECTION_VALID_TIMEOUT)) {
-			closeConnection();
-			createConnection();
-		}
-	}
+  public JDBCConnectionManager(final SinkCounter counter) {
+    this.counter = counter;
+  }
 
-	/**
-	 * Closes the current JDBC connection.
-	 */
-	public void closeConnection() {
-		if (connection != null) {
-			LOG.debug("Closing JDBC connection to: {}.", url);
-			
-			try {
-				connection.close();
-			} catch (final SQLException e) {
-				LOG.warn("Unable to close JDBC connection to {}.", url, e);
-			}
+  @Override
+  public void configure(final Context context) {
+    driver = context.getString("driver");
+    Preconditions.checkNotNull(driver, "Driver must be specified.");
+    url = context.getString("url");
+    Preconditions.checkNotNull(url, "URL must be specified.");
+    user = context.getString("user");
+    Preconditions.checkNotNull(user, "User must be specified.");
+    password = context.getString("password");
+    Preconditions.checkNotNull(password, "Driver must be specified.");
+  }
 
-			connection = null;
-			counter.incrementConnectionClosedCount();
-		}
-	}
+  public Connection getConnection() {
+    return connection;
+  }
 
-	private void createConnection() throws ClassNotFoundException, SQLException {
-		LOG.debug("Creating JDBC connection to: {}.", url);
-		connection = DriverManager.getConnection(url, user, password);
-		connection.setAutoCommit(false);
-		counter.incrementConnectionCreatedCount();
-	}
+  /**
+   * Start the connection manager: load the driver and create a connection. Note
+   * that the sink counter must have been started before calling this method.
+   */
+  public void start() {
+    try {
+      Class.forName(driver);
+      createConnection();
+    } catch (final Exception e) {
+      LOG.error("Unable to create JDBC connection to {}.", url, e);
+      counter.incrementConnectionFailedCount();
+      closeConnection();
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * Ensure that the current JDBC connection is valid. If it's not, create one.
+   * 
+   * @throws SQLException
+   * @throws ClassNotFoundException
+   */
+  public void ensureConnectionValid() throws SQLException,
+      ClassNotFoundException {
+    LOG.debug("Testing JDBC connection validity to: {}.", url);
+    if (connection == null || !connection.isValid(CONNECTION_VALID_TIMEOUT)) {
+      closeConnection();
+      createConnection();
+    }
+  }
+
+  /**
+   * Closes the current JDBC connection.
+   */
+  public void closeConnection() {
+    if (connection != null) {
+      LOG.debug("Closing JDBC connection to: {}.", url);
+
+      try {
+        connection.close();
+      } catch (final SQLException e) {
+        LOG.warn("Unable to close JDBC connection to {}.", url, e);
+      }
+
+      connection = null;
+      counter.incrementConnectionClosedCount();
+    }
+  }
+
+  private void createConnection() throws ClassNotFoundException, SQLException {
+    LOG.debug("Creating JDBC connection to: {}.", url);
+    connection = DriverManager.getConnection(url, user, password);
+    connection.setAutoCommit(false);
+    counter.incrementConnectionCreatedCount();
+  }
 
 }

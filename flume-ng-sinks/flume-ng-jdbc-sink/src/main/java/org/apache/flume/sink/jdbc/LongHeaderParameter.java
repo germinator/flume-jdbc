@@ -24,24 +24,25 @@ import java.sql.Types;
 import org.apache.flume.Event;
 
 /**
- * A parameter that takes a header value and parses a long value from it, using that
- * value in the prepared statement.  If the header or value is null, null is passed
- * to the prepared statement.
+ * A parameter that takes a header value and parses a long value from it, using
+ * that value in the prepared statement. If the header or value is null, null is
+ * passed to the prepared statement.
  */
 public class LongHeaderParameter extends HeaderParameter {
 
-	public LongHeaderParameter(final int parameter, final String header) {
-		super(parameter, header);
-	}
+  public LongHeaderParameter(final int parameter, final String header) {
+    super(parameter, header);
+  }
 
-	@Override
-	public void setValue(final PreparedStatement ps, final Event e) throws Exception {
-		final String value = e.getHeaders().get(header);
-		if (value == null) {
-			ps.setNull(id, Types.BIGINT);
-		} else {
-			ps.setLong(id, Long.parseLong(value));
-		}
-	}
+  @Override
+  public void setValue(final PreparedStatement ps, final Event e)
+      throws Exception {
+    final String value = e.getHeaders().get(header);
+    if (value == null) {
+      ps.setNull(id, Types.BIGINT);
+    } else {
+      ps.setLong(id, Long.parseLong(value));
+    }
+  }
 
 }

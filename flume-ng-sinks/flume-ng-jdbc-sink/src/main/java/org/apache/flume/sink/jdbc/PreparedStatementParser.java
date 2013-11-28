@@ -28,66 +28,74 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 /**
- * A class to parse the SQL statement provided into the config.  It does this by replacing any
- * tokens, say, "${header.foo:string}" with prepared statement parameters "?" and creating a
- * Parameter class item to manage the coversion from event to prepared statement.
+ * A class to parse the SQL statement provided into the config. It does this by
+ * replacing any tokens, say, "${header.foo:string}" with prepared statement
+ * parameters "?" and creating a Parameter class item to manage the coversion
+ * from event to prepared statement.
  */
 public class PreparedStatementParser {
 
-	private static final Logger LOG = LoggerFactory.getLogger(PreparedStatementParser.class);
-	private static final Pattern TOKEN_PATTERN = Pattern.compile("\\$\\{(.+?):(.+?)\\}");
-	private static final Pattern TYPE_CONFIG_PATTERN = Pattern.compile("(.+)\\((.*?)\\)");
-	private String preparedSql;
-	private List<Parameter> parameters = Lists.newArrayList();
-	
-	public PreparedStatementParser(final String sql) {
-		parse(sql);
-	}
-	
-	public String getPreparedSQL() {
-		return preparedSql;
-	}
+  private static final Logger LOG = LoggerFactory
+      .getLogger(PreparedStatementParser.class);
+  private static final Pattern TOKEN_PATTERN = Pattern
+      .compile("\\$\\{(.+?):(.+?)\\}");
+  private static final Pattern TYPE_CONFIG_PATTERN = Pattern
+      .compile("(.+)\\((.*?)\\)");
+  private String preparedSql;
+  private List<Parameter> parameters = Lists.newArrayList();
 
-	public List<Parameter> getParameters() {
-		return parameters;
-	}
+  public PreparedStatementParser(final String sql) {
+    parse(sql);
+  }
 
-	private void parse(String sql) {
-		LOG.debug("Parsing parameterized SQL statement: '{}'", sql);
-		
-		// For each token, find it, create a parameter for it, and replace it with a ?.
-		Matcher matcher = TOKEN_PATTERN.matcher(sql);
-		int id = 1;
-		while (matcher.find()) {
-			final String item = matcher.group(1);
-			final String typeConfig = matcher.group(2);
-			final TypeConfig tc = parseTypeConfig(typeConfig);
-			parameters.add(Parameter.newParameter(id, item, tc.type, tc.config));
-			sql = matcher.replaceFirst("?");
-			matcher = TOKEN_PATTERN.matcher(sql);
-			id++;
-			LOG.debug("Replaced token with item: '{}' and type: '{}' with config: '{}'", new Object[] { item, tc.type, tc.config });
-		}
-		
-		preparedSql = sql;
-		LOG.debug("Resulting parameterized SQL statement: '{}'.", preparedSql);
-	}
-	
-	private static TypeConfig parseTypeConfig(String typeConfig) {
-		final Matcher m = TYPE_CONFIG_PATTERN.matcher(typeConfig);
-		if (!m.matches()) {
-			return new TypeConfig(typeConfig, null);
-		}
-		return new TypeConfig(m.group(1), m.group(2));
-	}
-	
-	private static class TypeConfig {
-		public final String type;
-		public final String config;
-		public TypeConfig(final String t, final String c) {
-			type = t;
-			config = c;
-		}
-	}
+  public String getPreparedSQL() {
+    return preparedSql;
+  }
+
+  public List<Parameter> getParameters() {
+    return parameters;
+  }
+
+  private void parse(String sql) {
+    LOG.debug("Parsing parameterized SQL statement: '{}'", sql);
+
+    // For each token, find it, create a parameter for it, and replace it with a
+    // ?.
+    Matcher matcher = TOKEN_PATTERN.matcher(sql);
+    int id = 1;
+    while (matcher.find()) {
+      final String item = matcher.group(1);
+      final String typeConfig = matcher.group(2);
+      final TypeConfig tc = parseTypeConfig(typeConfig);
+      parameters.add(Parameter.newParameter(id, item, tc.type, tc.config));
+      sql = matcher.replaceFirst("?");
+      matcher = TOKEN_PATTERN.matcher(sql);
+      id++;
+      LOG.debug(
+          "Replaced token with item: '{}' and type: '{}' with config: '{}'",
+          new Object[] { item, tc.type, tc.config });
+    }
+
+    preparedSql = sql;
+    LOG.debug("Resulting parameterized SQL statement: '{}'.", preparedSql);
+  }
+
+  private static TypeConfig parseTypeConfig(String typeConfig) {
+    final Matcher m = TYPE_CONFIG_PATTERN.matcher(typeConfig);
+    if (!m.matches()) {
+      return new TypeConfig(typeConfig, null);
+    }
+    return new TypeConfig(m.group(1), m.group(2));
+  }
+
+  private static class TypeConfig {
+    public final String type;
+    public final String config;
+
+    public TypeConfig(final String t, final String c) {
+      type = t;
+      config = c;
+    }
+  }
 
 }

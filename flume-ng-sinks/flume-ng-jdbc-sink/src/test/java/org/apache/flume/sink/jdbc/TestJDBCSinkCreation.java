@@ -28,9 +28,9 @@ public class TestJDBCSinkCreation {
 
   @Test
   public void testSinkCreation() {
-	    final SinkFactory factory = new DefaultSinkFactory();
-	    final Sink sink = factory.create("s", "jdbc");
-	    assertNotNull(sink);
-	    assertTrue(sink instanceof PreparedStatementJDBCSink);
+    final SinkFactory factory = new DefaultSinkFactory();
+    final Sink sink = factory.create("s", "jdbc");
+    assertNotNull(sink);
+    assertTrue(sink instanceof PreparedStatementJDBCSink);
   }
 }

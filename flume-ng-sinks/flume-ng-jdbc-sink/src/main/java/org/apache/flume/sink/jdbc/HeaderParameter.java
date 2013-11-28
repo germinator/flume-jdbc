@@ -23,12 +23,12 @@ package org.apache.flume.sink.jdbc;
  * (and not the body).
  */
 public abstract class HeaderParameter extends Parameter {
-	
-	protected String header;
-	
-	public HeaderParameter(final int id, final String header) {
-		super(id);
-		this.header = header;
-	}
+
+  protected String header;
+
+  public HeaderParameter(final int id, final String header) {
+    super(id);
+    this.header = header;
+  }
 
 }

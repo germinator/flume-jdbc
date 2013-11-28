@@ -24,24 +24,25 @@ import java.sql.Types;
 import org.apache.flume.Event;
 
 /**
- * A parameter that takes a header value and parses a float value from it, using that
- * value in the prepared statement.  If the header or value is null, null is passed
- * to the prepared statement.
+ * A parameter that takes a header value and parses a float value from it, using
+ * that value in the prepared statement. If the header or value is null, null is
+ * passed to the prepared statement.
  */
 public class FloatHeaderParameter extends HeaderParameter {
 
-	public FloatHeaderParameter(final int parameter, final String header) {
-		super(parameter, header);
-	}
+  public FloatHeaderParameter(final int parameter, final String header) {
+    super(parameter, header);
+  }
 
-	@Override
-	public void setValue(final PreparedStatement ps, final Event e) throws Exception {
-		final String value = e.getHeaders().get(header);
-		if (value == null) {
-			ps.setNull(id, Types.REAL);
-		} else {
-			ps.setFloat(id, Float.parseFloat(value));
-		}
-	}
+  @Override
+  public void setValue(final PreparedStatement ps, final Event e)
+      throws Exception {
+    final String value = e.getHeaders().get(header);
+    if (value == null) {
+      ps.setNull(id, Types.REAL);
+    } else {
+      ps.setFloat(id, Float.parseFloat(value));
+    }
+  }
 
 }

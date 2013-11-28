@@ -34,88 +34,91 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 public class TestJDBCConnectionManager {
-	
-	private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
-	private static final String URL = "jdbc:derby:memory:test;create=true";
-	private static final String USER = "user";
-	private static final String PASSWORD = "password";
-	private JDBCConnectionManager manager;
-	private SinkCounter counter;
-	
-	@Before
-	public void setUp() {
-		counter = mock(SinkCounter.class);
-		manager = new JDBCConnectionManager(counter);
-	}
-	
-	@After
-	public void tearDown() {
-		manager.closeConnection();
-	}
 
-	@Test(expected=NullPointerException.class)
-	public void testConfigureRequiredDriver() {
-		manager.configure(newContext(null, "url", "user", "password"));
-	}
+  private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
+  private static final String URL = "jdbc:derby:memory:test;create=true";
+  private static final String USER = "user";
+  private static final String PASSWORD = "password";
+  private JDBCConnectionManager manager;
+  private SinkCounter counter;
 
-	@Test(expected=NullPointerException.class)
-	public void testConfigureRequiredURL() {
-		manager.configure(newContext("driver", null, "user", "password"));
-	}
+  @Before
+  public void setUp() {
+    counter = mock(SinkCounter.class);
+    manager = new JDBCConnectionManager(counter);
+  }
 
-	@Test(expected=NullPointerException.class)
-	public void testConfigureRequiredUser() {
-		manager.configure(newContext("driver", "url", null, "password"));
-	}
+  @After
+  public void tearDown() {
+    manager.closeConnection();
+  }
 
-	@Test(expected=NullPointerException.class)
-	public void testConfigureRequiredPassword() {
-		manager.configure(newContext("driver", "url", "user", null));
-	}
-	
-	@Test
-	public void testStartup() throws SQLException {
-		manager.configure(newContext(DRIVER, URL, USER, PASSWORD));
-		manager.start();
-		assertTrue(manager.getConnection().isValid(100));
-		verify(counter).incrementConnectionCreatedCount();
-	}
+  @Test(expected = NullPointerException.class)
+  public void testConfigureRequiredDriver() {
+    manager.configure(newContext(null, "url", "user", "password"));
+  }
 
-	@Test
-	public void testClose() throws SQLException {
-		manager.configure(newContext(DRIVER, URL, USER, PASSWORD));
-		manager.start();
-		manager.closeConnection();
-		assertThat(manager.getConnection(), nullValue());
-		verify(counter).incrementConnectionClosedCount();
-	}
-	
-	@Test
-	public void testEnsure() throws SQLException, ClassNotFoundException {
-		manager.configure(newContext(DRIVER, URL, USER, PASSWORD));
-		manager.start();
-		Connection c = manager.getConnection();
-		manager.ensureConnectionValid();
-		assertSame(manager.getConnection(), c);
-		manager.closeConnection();
-		manager.ensureConnectionValid();
-		assertNotSame(manager.getConnection(), c);
-		assertTrue(c.isClosed());
-		assertTrue(manager.getConnection().isValid(100));
-	}
+  @Test(expected = NullPointerException.class)
+  public void testConfigureRequiredURL() {
+    manager.configure(newContext("driver", null, "user", "password"));
+  }
 
-	private static Context newContext(final String driver, final String url, final String user, final String password) {
-		final ImmutableMap.Builder<String, String> b = ImmutableMap.<String, String>builder();
-		put(b, "driver", driver);
-		put(b, "url", url);
-		put(b, "user", user);
-		put(b, "password", password);
-		return new Context(b.build());
-	}
-	
-	private static void put(final ImmutableMap.Builder<String, String> b, final String k, final String v) {
-		if (v != null) {
-			b.put(k, v);
-		}
-	}
+  @Test(expected = NullPointerException.class)
+  public void testConfigureRequiredUser() {
+    manager.configure(newContext("driver", "url", null, "password"));
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testConfigureRequiredPassword() {
+    manager.configure(newContext("driver", "url", "user", null));
+  }
+
+  @Test
+  public void testStartup() throws SQLException {
+    manager.configure(newContext(DRIVER, URL, USER, PASSWORD));
+    manager.start();
+    assertTrue(manager.getConnection().isValid(100));
+    verify(counter).incrementConnectionCreatedCount();
+  }
+
+  @Test
+  public void testClose() throws SQLException {
+    manager.configure(newContext(DRIVER, URL, USER, PASSWORD));
+    manager.start();
+    manager.closeConnection();
+    assertThat(manager.getConnection(), nullValue());
+    verify(counter).incrementConnectionClosedCount();
+  }
+
+  @Test
+  public void testEnsure() throws SQLException, ClassNotFoundException {
+    manager.configure(newContext(DRIVER, URL, USER, PASSWORD));
+    manager.start();
+    Connection c = manager.getConnection();
+    manager.ensureConnectionValid();
+    assertSame(manager.getConnection(), c);
+    manager.closeConnection();
+    manager.ensureConnectionValid();
+    assertNotSame(manager.getConnection(), c);
+    assertTrue(c.isClosed());
+    assertTrue(manager.getConnection().isValid(100));
+  }
+
+  private static Context newContext(final String driver, final String url,
+      final String user, final String password) {
+    final ImmutableMap.Builder<String, String> b = ImmutableMap
+        .<String, String> builder();
+    put(b, "driver", driver);
+    put(b, "url", url);
+    put(b, "user", user);
+    put(b, "password", password);
+    return new Context(b.build());
+  }
+
+  private static void put(final ImmutableMap.Builder<String, String> b,
+      final String k, final String v) {
+    if (v != null) {
+      b.put(k, v);
+    }
+  }
 }

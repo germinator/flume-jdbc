@@ -29,41 +29,43 @@ import java.util.regex.Pattern;
 import org.apache.flume.Event;
 
 /**
- * A parameter that takes a header value and parses a date value from it, using the
- * provided formatter.  If the header or value is null, null is passed
- * to the prepared statement.
+ * A parameter that takes a header value and parses a date value from it, using
+ * the provided formatter. If the header or value is null, null is passed to the
+ * prepared statement.
  */
 public class DateHeaderParameter extends HeaderParameter {
-	
-	private static final Pattern CONFIG_PATTERN = Pattern.compile("(.+)#(.+?)");
-	SimpleDateFormat format;
 
-	public DateHeaderParameter(final int parameter, final String header) {
-		super(parameter, header);
-	}
-	
-	@Override
-	public void configure(final String config) {
-		if (config == null || "".equals(config)) {
-			throw new IllegalArgumentException("Config string is required for date parameters.");
-		}
-		final Matcher m = CONFIG_PATTERN.matcher(config);
-		if (m.matches()) {
-			format = new SimpleDateFormat(m.group(1));
-			format.setTimeZone(TimeZone.getTimeZone(m.group(2)));
-		} else {
-			format = new SimpleDateFormat(config);
-		}
-	}
+  private static final Pattern CONFIG_PATTERN = Pattern.compile("(.+)#(.+?)");
+  SimpleDateFormat format;
 
-	@Override
-	public void setValue(final PreparedStatement ps, final Event e) throws Exception {
-		final String value = e.getHeaders().get(header);
-		if (value == null) {
-			ps.setNull(id, Types.TIMESTAMP);
-		} else {
-			ps.setTimestamp(id, new Timestamp(format.parse(value).getTime()));
-		}
-	}
+  public DateHeaderParameter(final int parameter, final String header) {
+    super(parameter, header);
+  }
+
+  @Override
+  public void configure(final String config) {
+    if (config == null || "".equals(config)) {
+      throw new IllegalArgumentException(
+          "Config string is required for date parameters.");
+    }
+    final Matcher m = CONFIG_PATTERN.matcher(config);
+    if (m.matches()) {
+      format = new SimpleDateFormat(m.group(1));
+      format.setTimeZone(TimeZone.getTimeZone(m.group(2)));
+    } else {
+      format = new SimpleDateFormat(config);
+    }
+  }
+
+  @Override
+  public void setValue(final PreparedStatement ps, final Event e)
+      throws Exception {
+    final String value = e.getHeaders().get(header);
+    if (value == null) {
+      ps.setNull(id, Types.TIMESTAMP);
+    } else {
+      ps.setTimestamp(id, new Timestamp(format.parse(value).getTime()));
+    }
+  }
 
 }

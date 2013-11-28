@@ -27,17 +27,25 @@ import org.apache.flume.Event;
 import org.junit.Test;
 
 public class TestPreparedStatementParser {
-	
-	@Test
-	public void testCommonStatementParsing() {
-		final PreparedStatementParser p = new PreparedStatementParser("insert into mytable (mystringbody, mystringheader, mylongheader, mycustomheader) values (${body:string(UTF-8)}, ${header.foo:string}, ${header.bar:long()}, ${custom:org.apache.flume.sink.jdbc.TestPreparedStatementParser$TestCustomParameter(UTF-8)})");
-		assertThat(p.getPreparedSQL(), is("insert into mytable (mystringbody, mystringheader, mylongheader, mycustomheader) values (?, ?, ?, ?)"));
-		assertThat(p.getParameters().size(), is(4));
-	}
-	
-	public static class TestCustomParameter extends CustomParameter {
-		public TestCustomParameter(final int id) { super(id); }
-		@Override public void setValue(PreparedStatement ps, Event e) throws Exception { }
-	}
+
+  @Test
+  public void testCommonStatementParsing() {
+    final PreparedStatementParser p = new PreparedStatementParser(
+        "insert into mytable (mystringbody, mystringheader, mylongheader, mycustomheader) values (${body:string(UTF-8)}, ${header.foo:string}, ${header.bar:long()}, ${custom:org.apache.flume.sink.jdbc.TestPreparedStatementParser$TestCustomParameter(UTF-8)})");
+    assertThat(
+        p.getPreparedSQL(),
+        is("insert into mytable (mystringbody, mystringheader, mylongheader, mycustomheader) values (?, ?, ?, ?)"));
+    assertThat(p.getParameters().size(), is(4));
+  }
+
+  public static class TestCustomParameter extends CustomParameter {
+    public TestCustomParameter(final int id) {
+      super(id);
+    }
+
+    @Override
+    public void setValue(PreparedStatement ps, Event e) throws Exception {
+    }
+  }
 
 }

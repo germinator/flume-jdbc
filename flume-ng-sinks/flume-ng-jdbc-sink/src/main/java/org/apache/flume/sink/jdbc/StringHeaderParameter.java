@@ -24,24 +24,25 @@ import java.sql.Types;
 import org.apache.flume.Event;
 
 /**
- * A parameter that takes a header (which is a String already), does no conversion, and
- * sets the value into the statement.  If the header key doesn't exist or the value is
- * null, the database value will also be set to null.
+ * A parameter that takes a header (which is a String already), does no
+ * conversion, and sets the value into the statement. If the header key doesn't
+ * exist or the value is null, the database value will also be set to null.
  */
 public class StringHeaderParameter extends HeaderParameter {
 
-	public StringHeaderParameter(final int parameter, final String header) {
-		super(parameter, header);
-	}
+  public StringHeaderParameter(final int parameter, final String header) {
+    super(parameter, header);
+  }
 
-	@Override
-	public void setValue(final PreparedStatement ps, final Event e) throws Exception {
-		final String value = e.getHeaders().get(header);
-		if (value == null) {
-			ps.setNull(id, Types.VARCHAR);
-		} else {
-			ps.setString(id, value);
-		}
-	}
+  @Override
+  public void setValue(final PreparedStatement ps, final Event e)
+      throws Exception {
+    final String value = e.getHeaders().get(header);
+    if (value == null) {
+      ps.setNull(id, Types.VARCHAR);
+    } else {
+      ps.setString(id, value);
+    }
+  }
 
 }

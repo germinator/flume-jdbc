@@ -38,186 +38,200 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 /**
- * A an abstract base class for different JDBC sinks.  This class takes care of managing
- * connections and transactions.
+ * A an abstract base class for different JDBC sinks. This class takes care of
+ * managing connections and transactions.
  */
-public abstract class AbstractJDBCSink extends AbstractSink implements Configurable {
+public abstract class AbstractJDBCSink extends AbstractSink implements
+    Configurable {
 
-	private static final Logger LOG = LoggerFactory.getLogger(AbstractJDBCSink.class);
-	private CounterGroup counterGroup;
-	private int batchSize;
-	private SinkCounter counter;
-	private JDBCConnectionManager connectionManager;
+  private static final Logger LOG = LoggerFactory
+      .getLogger(AbstractJDBCSink.class);
+  private CounterGroup counterGroup;
+  private int batchSize;
+  private SinkCounter counter;
+  private JDBCConnectionManager connectionManager;
 
-	/**
-	 * This method is called after the transaction is started but before event processing
-	 * starts.  It allows subclasses to get ready for event processing.
-	 * @throws SQLException
-	 */
-	protected abstract void prepareJDBC() throws SQLException;
-	
-	/**
-	 * This method is called for each incoming event.  Subclasses are responsible for
-	 * obtaining the database connection and doing the JDBC operations required to
-	 * jam this event into the database.
-	 * @param event the event to process
-	 * @throws Exception on any sort of processing problem - connection, conversion, etc
-	 */
-	protected abstract void processJDBC(final Event event) throws Exception;
-	
-	/**
-	 * This method is called before the transaction is committed but after event processing
-	 * is completed.  It allows subclasses to get finish or clean up afterwards.
-	 * @throws SQLException
-	 */
-	protected abstract void completeJDBC() throws SQLException;
+  /**
+   * This method is called after the transaction is started but before event
+   * processing starts. It allows subclasses to get ready for event processing.
+   * 
+   * @throws SQLException
+   */
+  protected abstract void prepareJDBC() throws SQLException;
 
-	/**
-	 * This method is called on error, before rollback and failure to give the subclass an
-	 * attempt to clean up.
-	 * @throws SQLException
-	 */
-	protected abstract void abortJDBC() throws SQLException;
+  /**
+   * This method is called for each incoming event. Subclasses are responsible
+   * for obtaining the database connection and doing the JDBC operations
+   * required to jam this event into the database.
+   * 
+   * @param event
+   *          the event to process
+   * @throws Exception
+   *           on any sort of processing problem - connection, conversion, etc
+   */
+  protected abstract void processJDBC(final Event event) throws Exception;
 
-	@Override
-	public void configure(final Context context) {
-		if (counter == null) {
-			counter = new SinkCounter(getName());
-		}
-		if (counterGroup == null) {
-			counterGroup = new CounterGroup();
-		}
+  /**
+   * This method is called before the transaction is committed but after event
+   * processing is completed. It allows subclasses to get finish or clean up
+   * afterwards.
+   * 
+   * @throws SQLException
+   */
+  protected abstract void completeJDBC() throws SQLException;
 
-		connectionManager = new JDBCConnectionManager(counter);
-		connectionManager.configure(context);
-		
-		batchSize = context.getInteger("batchSize", 100);
-		Preconditions.checkArgument(batchSize > 0, "Batch size must be specified and greater than zero.");
-	}
+  /**
+   * This method is called on error, before rollback and failure to give the
+   * subclass an attempt to clean up.
+   * 
+   * @throws SQLException
+   */
+  protected abstract void abortJDBC() throws SQLException;
 
-	@Override
-	public synchronized void start() {
-		super.start();
-		counter.start();
-		connectionManager.start();
-	}
+  @Override
+  public void configure(final Context context) {
+    if (counter == null) {
+      counter = new SinkCounter(getName());
+    }
+    if (counterGroup == null) {
+      counterGroup = new CounterGroup();
+    }
 
-	@Override
-	public synchronized void stop() {
-		super.stop();
-		connectionManager.closeConnection();
-		counter.stop();
-	}
-	
-	/**
-	 * Gets the current JDBC database connection.
-	 * @return the connection
-	 */
-	public Connection getConnection() {
-		return connectionManager.getConnection();
-	}
+    connectionManager = new JDBCConnectionManager(counter);
+    connectionManager.configure(context);
 
-	@Override
-	public Status process() throws EventDeliveryException {
-		final Channel channel = getChannel();
-		final Transaction transaction = channel.getTransaction();
-		
-		try {
-			// Start transactions, prepare for JDBC operations.
-			transaction.begin();
-			connectionManager.ensureConnectionValid();
-			prepareJDBC();
+    batchSize = context.getInteger("batchSize", 100);
+    Preconditions.checkArgument(batchSize > 0,
+        "Batch size must be specified and greater than zero.");
+  }
 
-			// For each event...
-			int count;
-			for (count = 0; count < batchSize; count++) {
-				final Event event = channel.take();
+  @Override
+  public synchronized void start() {
+    super.start();
+    counter.start();
+    connectionManager.start();
+  }
 
-				if (event == null) {
-					break;
-				}
+  @Override
+  public synchronized void stop() {
+    super.stop();
+    connectionManager.closeConnection();
+    counter.stop();
+  }
 
-				processJDBC(event);
-			}
-			
-			// Clean up.
-			completeJDBC();
+  /**
+   * Gets the current JDBC database connection.
+   * 
+   * @return the connection
+   */
+  public Connection getConnection() {
+    return connectionManager.getConnection();
+  }
 
-			// Update attempt counters.  Commit.  Update success counters.
-			final Status status = updateAttemptCounters(count);
-			connectionManager.getConnection().commit();
-			transaction.commit();
-			updateSuccessCounters(count);
-			return status;
-		} catch (Exception e) {
+  @Override
+  public Status process() throws EventDeliveryException {
+    final Channel channel = getChannel();
+    final Transaction transaction = channel.getTransaction();
 
-			try {
-				// Something went wrong, back out.  Update failure counters.
-				abortJDBC();
-				connectionManager.getConnection().rollback();
-				transaction.rollback();
-				updateFailureCounters();
-			} catch (Exception e2) {
-				LOG.error(
-						"Exception in rollback. Rollback might not have been successful.",
-						e2);
-			}
+    try {
+      // Start transactions, prepare for JDBC operations.
+      transaction.begin();
+      connectionManager.ensureConnectionValid();
+      prepareJDBC();
 
-			LOG.error("Failed to commit transaction. Transaction rolled back.",
-					e);
-			Throwables.propagate(e);
-		} finally {
-			transaction.close();
-		}
-		
-		// This should never happen.
-		return null;
-	}
-	
-	@VisibleForTesting
-	void setConnectionManager(final JDBCConnectionManager connectionManager) {
-		this.connectionManager = connectionManager;
-	}
-	
-	/**
-	 * Update the attempt counters.  (As a side effect, return the processing status.
-	 * This is only done here for convenience.)
-	 * @param count the number of events attempted
-	 * @return the resulting sink status
-	 */
-	private Status updateAttemptCounters(final int count) {
-		counter.addToEventDrainAttemptCount(count);
+      // For each event...
+      int count;
+      for (count = 0; count < batchSize; count++) {
+        final Event event = channel.take();
 
-		if (count == 0) {
-			counter.incrementBatchEmptyCount();
-			counterGroup.incrementAndGet("channel.underflow");
-			return Status.BACKOFF;
-		}
-		
-		if (count < batchSize) {
-			counter.incrementBatchUnderflowCount();
-			return Status.READY;
-		}
-		
-		// Else, count == batchSize and the batch is full.
-		counter.incrementBatchCompleteCount();
-		return Status.READY;
-	}
+        if (event == null) {
+          break;
+        }
 
-	/**
-	 * Update success counters
-	 * @param count the number of events successfully processed
-	 */
-	private void updateSuccessCounters(final int count) {
-		counter.addToEventDrainSuccessCount(count);
-		counterGroup.incrementAndGet("transaction.success");
-	}
+        processJDBC(event);
+      }
 
-	/**
-	 * Update failure counters.  Increments the transaction rollback counter.
-	 */
-	private void updateFailureCounters() {
-		counterGroup.incrementAndGet("transaction.rollback");
-	}
+      // Clean up.
+      completeJDBC();
+
+      // Update attempt counters. Commit. Update success counters.
+      final Status status = updateAttemptCounters(count);
+      connectionManager.getConnection().commit();
+      transaction.commit();
+      updateSuccessCounters(count);
+      return status;
+    } catch (Exception e) {
+
+      try {
+        // Something went wrong, back out. Update failure counters.
+        abortJDBC();
+        connectionManager.getConnection().rollback();
+        transaction.rollback();
+        updateFailureCounters();
+      } catch (Exception e2) {
+        LOG.error(
+            "Exception in rollback. Rollback might not have been successful.",
+            e2);
+      }
+
+      LOG.error("Failed to commit transaction. Transaction rolled back.", e);
+      Throwables.propagate(e);
+    } finally {
+      transaction.close();
+    }
+
+    // This should never happen.
+    return null;
+  }
+
+  @VisibleForTesting
+  void setConnectionManager(final JDBCConnectionManager connectionManager) {
+    this.connectionManager = connectionManager;
+  }
+
+  /**
+   * Update the attempt counters. (As a side effect, return the processing
+   * status. This is only done here for convenience.)
+   * 
+   * @param count
+   *          the number of events attempted
+   * @return the resulting sink status
+   */
+  private Status updateAttemptCounters(final int count) {
+    counter.addToEventDrainAttemptCount(count);
+
+    if (count == 0) {
+      counter.incrementBatchEmptyCount();
+      counterGroup.incrementAndGet("channel.underflow");
+      return Status.BACKOFF;
+    }
+
+    if (count < batchSize) {
+      counter.incrementBatchUnderflowCount();
+      return Status.READY;
+    }
+
+    // Else, count == batchSize and the batch is full.
+    counter.incrementBatchCompleteCount();
+    return Status.READY;
+  }
+
+  /**
+   * Update success counters
+   * 
+   * @param count
+   *          the number of events successfully processed
+   */
+  private void updateSuccessCounters(final int count) {
+    counter.addToEventDrainSuccessCount(count);
+    counterGroup.incrementAndGet("transaction.success");
+  }
+
+  /**
+   * Update failure counters. Increments the transaction rollback counter.
+   */
+  private void updateFailureCounters() {
+    counterGroup.incrementAndGet("transaction.rollback");
+  }
 
 }

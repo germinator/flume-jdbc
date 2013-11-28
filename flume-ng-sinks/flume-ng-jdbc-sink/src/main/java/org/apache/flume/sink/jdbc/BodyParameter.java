@@ -19,13 +19,13 @@
 package org.apache.flume.sink.jdbc;
 
 /**
- * A subclass of parameter used to identify parameters that read from the event body
- * (and not a header).
+ * A subclass of parameter used to identify parameters that read from the event
+ * body (and not a header).
  */
 public abstract class BodyParameter extends Parameter {
-	
-	public BodyParameter(final int id) {
-		super(id);
-	}
+
+  public BodyParameter(final int id) {
+    super(id);
+  }
 
 }

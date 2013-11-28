@@ -27,52 +27,53 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PreparedStatementJDBCSink extends AbstractJDBCSink {
-	
-	private static final Logger LOG = LoggerFactory.getLogger(PreparedStatementJDBCSink.class);
-	private String sql;
-	private PreparedStatement statement;
-	private PreparedStatementParser parser;
-	
-	@Override
-	public void configure(final Context context) {
-		super.configure(context);
-		sql = context.getString("sql");
-		parser = new PreparedStatementParser(sql);
-	}
 
-	@Override
-	protected void prepareJDBC() throws SQLException {
-		// Prepare the prepared statement.
-		statement = getConnection().prepareStatement(parser.getPreparedSQL());
-	}
+  private static final Logger LOG = LoggerFactory
+      .getLogger(PreparedStatementJDBCSink.class);
+  private String sql;
+  private PreparedStatement statement;
+  private PreparedStatementParser parser;
 
-	@Override
-	protected void processJDBC(final Event event) throws Exception {
-		// Set all of the parameters into the prepared statement, then add to batch.
-		for (final Parameter p : parser.getParameters()) {
-			p.setValue(statement, event);
-		}
-		statement.addBatch();
-	}
-	
-	@Override
-	protected void completeJDBC() throws SQLException {
-		try {
-			statement.executeBatch();
-		} finally {
-			statement.close();
-		}
-	}
-	
-	@Override
-	protected void abortJDBC() {
-		try {
-			statement.close();
-		} catch (final SQLException e) {
-			LOG.error("Unable to properly close statement on JDBC abort.", e);
-		} finally {
-			statement = null;
-		}
-	}
-	
+  @Override
+  public void configure(final Context context) {
+    super.configure(context);
+    sql = context.getString("sql");
+    parser = new PreparedStatementParser(sql);
+  }
+
+  @Override
+  protected void prepareJDBC() throws SQLException {
+    // Prepare the prepared statement.
+    statement = getConnection().prepareStatement(parser.getPreparedSQL());
+  }
+
+  @Override
+  protected void processJDBC(final Event event) throws Exception {
+    // Set all of the parameters into the prepared statement, then add to batch.
+    for (final Parameter p : parser.getParameters()) {
+      p.setValue(statement, event);
+    }
+    statement.addBatch();
+  }
+
+  @Override
+  protected void completeJDBC() throws SQLException {
+    try {
+      statement.executeBatch();
+    } finally {
+      statement.close();
+    }
+  }
+
+  @Override
+  protected void abortJDBC() {
+    try {
+      statement.close();
+    } catch (final SQLException e) {
+      LOG.error("Unable to properly close statement on JDBC abort.", e);
+    } finally {
+      statement = null;
+    }
+  }
+
 }
